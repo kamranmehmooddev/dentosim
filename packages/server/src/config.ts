@@ -1,7 +1,23 @@
 /**
  * Environment configuration (validated once). See .env.example at the repo root.
  */
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { z } from "zod";
+
+/** Load the nearest .env (cwd or up to 3 parents — the repo root in dev). Existing env vars win. */
+function loadDotEnv(): void {
+  if (process.env.NODE_ENV === "test" || process.env.DENTOSIM_NO_DOTENV) return;
+  let dir = process.cwd();
+  for (let i = 0; i < 4; i++) {
+    const f = join(dir, ".env");
+    if (existsSync(f)) {
+      try { process.loadEnvFile(f); } catch { /* ignore malformed */ }
+      return;
+    }
+    dir = dirname(dir);
+  }
+}
 
 const bool = z
   .string()
@@ -62,6 +78,7 @@ let cached: Config | undefined;
 
 export function config(): Config {
   if (!cached) {
+    loadDotEnv();
     const parsed = schema.safeParse(process.env);
     if (!parsed.success) throw new Error(`Invalid environment: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`);
     cached = parsed.data;

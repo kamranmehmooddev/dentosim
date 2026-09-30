@@ -19,3 +19,5 @@ export * from "./tsm2/tsm2.js";
 export * from "./package/package.js";
 export * from "./render/raster.js";
 export * from "./selfcheck.js";
+export * from "./fixtures/synth.js";
+export * from "./fixtures/catalog.js";

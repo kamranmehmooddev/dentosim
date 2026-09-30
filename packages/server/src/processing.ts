@@ -8,7 +8,7 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { and, eq, sql } from "drizzle-orm";
 import { audit } from "./audit.js";
@@ -30,10 +30,11 @@ interface RunnerResult {
 }
 
 function runnerPath(): { file: string; execArgv: string[] } {
-  const js = fileURLToPath(new URL("./sandbox-runner.js", import.meta.url));
+  const here = dirname(fileURLToPath(import.meta.url));
+  const js = join(here, "sandbox-runner.js");
   if (existsSync(js)) return { file: js, execArgv: [] };
   // development (tsx): run the TypeScript source with the same loader
-  return { file: fileURLToPath(new URL("./sandbox-runner.ts", import.meta.url)), execArgv: process.execArgv.filter((a) => !a.startsWith("--max-old-space-size")) };
+  return { file: join(here, "sandbox-runner.ts"), execArgv: process.execArgv.filter((a) => !a.startsWith("--max-old-space-size")) };
 }
 
 async function runSandbox(args: object, onProgress: (p: { percent: number; step: string; message: string }) => void): Promise<RunnerResult> {

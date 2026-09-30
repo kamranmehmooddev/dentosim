@@ -10,3 +10,9 @@ fixtures/*/export/
 fixtures/*/out/
 fixtures/generic-maxmand-folders/export.zip
 .selfcheck/
+.next/
+next-env.d.ts
+apps/web/e2e-results/
+apps/web/e2e-report/
+.data/
+.selfcheck-worker/
