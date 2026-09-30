@@ -151,7 +151,7 @@ export async function writePackage(c: CanonicalCase, outDir: string, opts: Packa
       if (c.arches.upper) shots.push(["thumbnails/upper-occlusal-final.png", stageItems(last("upper")), "bottom"]);
       if (c.arches.lower) shots.push(["thumbnails/lower-occlusal-final.png", stageItems(last("lower")), "top"]);
       for (const [rel, items, view] of shots) {
-        write(rel, renderPng(items, { width: 480, height: 320, view, background: [247, 247, 245, 255] }));
+        write(rel, renderPng(items, { width: 640, height: 400, view, gradient: [[46, 50, 60], [14, 15, 19]], marginFraction: 0.1 }));
         thumbnails.push(rel);
       }
     }

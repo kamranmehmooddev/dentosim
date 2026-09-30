@@ -98,6 +98,43 @@ function prism(railA: [number, number][], railB: [number, number][], y0: number,
   return { positions: Float32Array.from(pos), indices: Uint32Array.from(idx) };
 }
 
+/**
+ * Closed shell swept through `levels` (y, inset): each level is the outline
+ * A(inset) + reverse(B(inset)); caps at the first and last level are ladders
+ * between A and B. Rails must have equal point counts at every level.
+ */
+function roundedShell(levels: { y: number; inset: number }[], railA: (d: number) => [number, number][], railB: (d: number) => [number, number][]): Mesh {
+  const pos: number[] = [];
+  const idx: number[] = [];
+  let n = 0, m = 0;
+  for (const L of levels) {
+    const a = railA(L.inset), b = railB(L.inset);
+    m = a.length;
+    const loop = [...a, ...[...b].reverse()];
+    n = loop.length;
+    for (const [x, z] of loop) pos.push(x, L.y, z);
+  }
+  const ring = (l: number, i: number) => l * n + ((i + n) % n);
+  for (let l = 0; l + 1 < levels.length; l++)
+    for (let i = 0; i < n; i++) {
+      const a = ring(l, i), b = ring(l, i + 1), c = ring(l + 1, i), d = ring(l + 1, i + 1);
+      idx.push(a, b, d, a, d, c);
+    }
+  const cap = (l: number, flip: boolean) => {
+    for (let k = 0; k + 1 < m; k++) {
+      const a0 = ring(l, k), a1 = ring(l, k + 1), b0 = ring(l, n - 1 - k), b1 = ring(l, n - 2 - k);
+      const tri = (p: number, q: number, r: number) => {
+        if (p !== q && q !== r && p !== r) idx.push(...(flip ? [p, r, q] : [p, q, r]));
+      };
+      tri(a0, b0, a1);
+      tri(a1, b0, b1);
+    }
+  };
+  cap(0, false);
+  cap(levels.length - 1, true);
+  return { positions: Float32Array.from(pos), indices: Uint32Array.from(idx) };
+}
+
 interface ToothSpec {
   fdi: number;
   md: number;
@@ -232,21 +269,25 @@ export function makeArch(opts: ArchOptions): SynthArch {
     }
     return r;
   };
-  const y0 = up * 5.5, y1 = up * 16;
-  let gums: Mesh;
-  if (opts.jaw === "upper") {
-    // palate: ladder between left and right halves of the outer rail
-    const left = rail(6.5, 0, phiEnd, 48), right = rail(6.5, 0, -phiEnd, 48);
-    gums = prism(left, right, Math.min(y0, y1), Math.max(y0, y1));
-  } else {
-    const outer = rail(6.5, -phiEnd, phiEnd, 96), inner = rail(-6.5, -phiEnd, phiEnd, 96);
-    gums = prism(outer, inner, Math.min(y0, y1), Math.max(y0, y1));
+  // gingiva: extruded from the model base toward the teeth with a rounded
+  // (quarter-round) margin, so it reads as soft tissue rather than a slab
+  const yBase = up * 11.5, yMargin = up * 3.6, R = 4.6;
+  const levels: { y: number; inset: number }[] = [{ y: yBase, inset: 0 }];
+  const straightEnd = yMargin + up * R;
+  levels.push({ y: straightEnd, inset: 0 });
+  for (let k = 1; k <= 6; k++) {
+    const t = (k / 6) * (Math.PI / 2);
+    levels.push({ y: straightEnd - up * R * Math.sin(t), inset: R * (1 - Math.cos(t)) * 0.9 });
   }
+  const gums = opts.jaw === "upper"
+    // palate: ladder between the left and right halves of the outer rail
+    ? roundedShell(levels, (d) => rail(6.5 - d, 0, phiEnd, 48), (d) => rail(6.5 - d, 0, -phiEnd, 48))
+    : roundedShell(levels, (d) => rail(6.5 - d, -phiEnd, phiEnd, 96), (d) => rail(-6.5 + d, -phiEnd, phiEnd, 96));
   const text: Mesh[] = [];
   if (opts.embossedText)
     for (let i = 0; i < 5; i++) {
       const g = box([0.7, 0.5, 0.9]);
-      text.push({ positions: transformPositions(translation4([-3 + i * 1.3, up * 16.2, zShift - 4]), g.positions), indices: g.indices });
+      text.push({ positions: transformPositions(translation4([-3 + i * 1.3, up * 11.7, zShift - 4]), g.positions), indices: g.indices });
     }
   const arch: SynthArch = { jaw: opts.jaw, teeth, gums, text, stages: opts.stages, opts };
   return arch;

@@ -10,8 +10,8 @@ import { crc32 } from "../tsm2/tsm2.js";
 export type Rgb = [number, number, number];
 
 export const COLORS = {
-  tooth: [236, 228, 208] as Rgb,
-  gums: [214, 120, 128] as Rgb,
+  tooth: [242, 234, 214] as Rgb,
+  gums: [214, 128, 134] as Rgb,
   attachment: [170, 186, 204] as Rgb,
   base: [205, 205, 210] as Rgb,
   arch: [228, 200, 190] as Rgb,
@@ -30,6 +30,8 @@ export interface RenderOptions {
   height: number;
   view: View;
   background?: [number, number, number, number];
+  /** optional vertical gradient background (top → bottom); overrides `background` */
+  gradient?: [[number, number, number], [number, number, number]];
   marginFraction?: number;
 }
 
@@ -84,15 +86,32 @@ export function renderRgba(items: RenderItem[], opts: RenderOptions): Uint8Array
   const ox = W / 2 - ((minX + maxX) / 2) * s, oy = H / 2 + ((minY + maxY) / 2) * s;
   items.forEach((it, n) => {
     const p = projected[n], I = it.mesh.indices;
+    // smooth vertex normals in view space (Gouraud shading)
+    const vn = new Float32Array(p.length);
     for (let t = 0; t < I.length; t += 3) {
       const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3;
-      // view-space normal → headlight shading (light along +view z)
       const ux = p[b] - p[a], uy = p[b + 1] - p[a + 1], uz = p[b + 2] - p[a + 2];
       const vx = p[c] - p[a], vy = p[c + 1] - p[a + 1], vz = p[c + 2] - p[a + 2];
       const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
-      const nl = Math.hypot(nx, ny, nz);
-      if (nl === 0) continue;
-      const shade = 0.28 + 0.72 * Math.abs(nz / nl);
+      for (const v of [a, b, c]) { vn[v] += nx; vn[v + 1] += ny; vn[v + 2] += nz; }
+    }
+    // headlight slightly above-right; two-sided Lambert + soft Blinn highlight
+    const L = [0.25, 0.35, 0.9], Ll = Math.hypot(L[0], L[1], L[2]);
+    const lx = L[0] / Ll, ly = L[1] / Ll, lz = L[2] / Ll;
+    const hx = lx, hy = ly, hz = lz + 1, hl = Math.hypot(hx, hy, hz);
+    const shadeAt = new Float32Array(p.length / 3), specAt = new Float32Array(p.length / 3);
+    for (let v = 0; v < p.length / 3; v++) {
+      let nx = vn[v * 3], ny = vn[v * 3 + 1], nz = vn[v * 3 + 2];
+      const l = Math.hypot(nx, ny, nz) || 1;
+      nx /= l; ny /= l; nz /= l;
+      if (nz < 0) { nx = -nx; ny = -ny; nz = -nz; }
+      const d = Math.max(0, nx * lx + ny * ly + nz * lz);
+      shadeAt[v] = 0.3 + 0.72 * d;
+      specAt[v] = Math.pow(Math.max(0, (nx * hx + ny * hy + nz * hz) / hl), 36) * 0.35;
+    }
+    for (let t = 0; t < I.length; t += 3) {
+      const ia = I[t], ib = I[t + 1], ic = I[t + 2];
+      const a = ia * 3, b = ib * 3, c = ic * 3;
       const x0 = ox + p[a] * s, y0 = oy - p[a + 1] * s, z0 = p[a + 2];
       const x1 = ox + p[b] * s, y1 = oy - p[b + 1] * s, z1 = p[b + 2];
       const x2 = ox + p[c] * s, y2 = oy - p[c + 1] * s, z2 = p[c + 2];
@@ -111,9 +130,11 @@ export function renderRgba(items: RenderItem[], opts: RenderOptions): Uint8Array
           const k = y * W + x;
           if (z <= depth[k]) continue;
           depth[k] = z;
-          color[k * 4] = it.color[0] * shade;
-          color[k * 4 + 1] = it.color[1] * shade;
-          color[k * 4 + 2] = it.color[2] * shade;
+          const sh = w0 * shadeAt[ia] + w1 * shadeAt[ib] + w2 * shadeAt[ic];
+          const sp = (w0 * specAt[ia] + w1 * specAt[ib] + w2 * specAt[ic]) * 255;
+          color[k * 4] = Math.min(255, it.color[0] * sh + sp);
+          color[k * 4 + 1] = Math.min(255, it.color[1] * sh + sp);
+          color[k * 4 + 2] = Math.min(255, it.color[2] * sh + sp);
           color[k * 4 + 3] = 255;
         }
     }
@@ -127,7 +148,10 @@ export function renderRgba(items: RenderItem[], opts: RenderOptions): Uint8Array
         for (let dx = 0; dx < ss; dx++) {
           const k = ((y * ss + dy) * W + x * ss + dx) * 4;
           const covered = color[k + 3] > 0;
-          for (let c = 0; c < 4; c++) acc[c] += covered ? color[k + c] : bg[c];
+          const g = opts.gradient;
+          const t = y / Math.max(1, opts.height - 1);
+          const bgc = g ? [g[0][0] + (g[1][0] - g[0][0]) * t, g[0][1] + (g[1][1] - g[0][1]) * t, g[0][2] + (g[1][2] - g[0][2]) * t, 255] : bg;
+          for (let c = 0; c < 4; c++) acc[c] += covered ? color[k + c] : bgc[c];
         }
       for (let c = 0; c < 4; c++) out[(y * opts.width + x) * 4 + c] = Math.round(acc[c] / (ss * ss));
     }

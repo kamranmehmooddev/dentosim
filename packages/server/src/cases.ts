@@ -72,14 +72,35 @@ export async function listCases(ctx: OrgCtx, f: CaseListFilter = {}) {
       .select({
         id: cases.id, caseNumber: cases.caseNumber, status: cases.status, sourceSoftware: cases.sourceSoftware,
         patientRef: patients.reference, doctorName: users.name, updatedAt: cases.lastActivityAt, createdAt: cases.createdAt,
+        packagePrefix: revisions.packagePrefix, revisionNumber: revisions.number,
       })
       .from(cases)
       .innerJoin(patients, eq(patients.id, cases.patientId))
       .leftJoin(users, eq(users.id, cases.doctorUserId))
+      .leftJoin(revisions, eq(revisions.id, cases.currentRevisionId))
       .where(and(...conds))
       .orderBy(desc(cases.lastActivityAt))
       .limit(500);
   });
+}
+
+/** Case counts per state (for dashboard tiles and tabs). */
+export async function caseStats(ctx: OrgCtx): Promise<Record<string, number>> {
+  const rows = await withTenant(ctx.org.id, (tx) =>
+    tx
+      .select({ status: cases.status, n: sql<number>`count(*)::int` })
+      .from(cases)
+      .where(and(eq(cases.orgId, ctx.org.id), ...(isDoctor(ctx) ? [eq(cases.doctorUserId, ctx.user.id)] : [])))
+      .groupBy(cases.status),
+  );
+  return Object.fromEntries(rows.map((r) => [r.status, Number(r.n)]));
+}
+
+/** Short-lived signed URL of a package thumbnail (null when the revision has no package). */
+export async function thumbnailUrl(orgId: string, packagePrefix: string | null, name = "final-front.png"): Promise<string | null> {
+  if (!packagePrefix) return null;
+  assertTenantKey(orgId, packagePrefix);
+  return storage().signedGetUrl(`${packagePrefix}/thumbnails/${name}`, 900);
 }
 
 export async function sourceSoftwareOptions(ctx: OrgCtx): Promise<string[]> {

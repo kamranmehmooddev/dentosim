@@ -1,9 +1,41 @@
 @import "tailwindcss";
 
+/* ───────────────────────── DentoSim design tokens ─────────────────────────
+   Tenant branding overrides --brand / --brand-2 / --brand-font at runtime.   */
+
 @theme {
   --color-brand: var(--brand, #0f766e);
-  --color-brand-2: var(--brand-2, #134e4a);
-  --font-sans: var(--brand-font, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --color-brand-2: var(--brand-2, #14b8a6);
+  --color-ink: #0b0d12;
+  --color-ink-2: #12151c;
+  --color-canvas: #f6f7f9;
+  --color-line: #e7e8ec;
+  --color-muted: #6b7280;
+
+  --font-sans: var(--brand-font, var(--font-geist-sans)), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 0 0 1px rgb(16 24 40 / 0.05);
+  --shadow-raised: 0 1px 2px rgb(16 24 40 / 0.04), 0 8px 24px -8px rgb(16 24 40 / 0.12), 0 0 0 1px rgb(16 24 40 / 0.05);
+  --shadow-float: 0 20px 50px -12px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.08);
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--color-brand) 40%, transparent), 0 8px 30px -6px color-mix(in oklab, var(--color-brand) 55%, transparent);
+
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pulse-ring: pulse-ring 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 45%, transparent); }
+    100% { box-shadow: 0 0 0 7px transparent; }
+  }
 }
 
 :root {
@@ -11,14 +43,119 @@
 }
 
 html, body {
-  background: #fafaf9;
-  color: #1c1917;
+  background: var(--color-canvas);
+  color: #0f1115;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
 }
 
-/* focus ring that works on any brand colour */
+::selection {
+  background: color-mix(in oklab, var(--color-brand) 22%, transparent);
+}
+
 :focus-visible {
-  outline: 2px solid var(--color-brand);
+  outline: 2px solid color-mix(in oklab, var(--color-brand) 70%, white);
   outline-offset: 2px;
+  border-radius: 8px;
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
+
+/* hairline grid backdrop for hero surfaces */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.bg-grid-light {
+  background-image:
+    linear-gradient(to right, rgb(15 17 21 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(15 17 21 / 0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* brand aurora used on auth + patient hero surfaces */
+.aurora {
+  background:
+    radial-gradient(60% 50% at 15% 10%, color-mix(in oklab, var(--color-brand) 55%, transparent), transparent 70%),
+    radial-gradient(50% 45% at 85% 20%, color-mix(in oklab, var(--color-brand-2) 40%, transparent), transparent 70%),
+    radial-gradient(70% 60% at 50% 100%, rgb(99 102 241 / 0.18), transparent 70%),
+    var(--color-ink);
+}
+
+/* studio backdrop of the 3D viewer */
+.studio {
+  background:
+    radial-gradient(120% 90% at 50% 35%, #2a2e37 0%, #16181e 55%, #0b0c10 100%);
+}
+
+.glass {
+  background: rgb(18 20 26 / 0.62);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow: var(--shadow-float);
+}
+
+.glass-light {
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #eef0f3 0%, #f7f8fa 50%, #eef0f3 100%);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* range inputs: slim track, branded thumb */
+input[type="range"].ds-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 22px;
+  cursor: pointer;
+}
+input[type="range"].ds-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--color-brand-2) 0%, var(--color-brand-2) var(--fill, 0%), rgb(255 255 255 / 0.16) var(--fill, 0%));
+}
+input[type="range"].ds-range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.16);
+}
+input[type="range"].ds-range::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-brand-2);
+}
+input[type="range"].ds-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-brand-2) 35%, transparent), 0 2px 6px rgb(0 0 0 / 0.4);
+}
+input[type="range"].ds-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-brand-2) 35%, transparent), 0 2px 6px rgb(0 0 0 / 0.4);
+}
+
+/* thin scrollbars inside panels */
+.scroll-thin { scrollbar-width: thin; scrollbar-color: #d4d6dc transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
