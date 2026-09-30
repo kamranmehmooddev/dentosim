@@ -9,13 +9,18 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "pnpm -r build",
-    "typecheck": "pnpm --filter @dentosim/canonical build && pnpm -r typecheck",
-    "pretest": "pnpm --filter @dentosim/canonical build",
-    "test": "pnpm -r test",
+    "build": "pnpm --filter @dentosim/canonical build && pnpm --filter @dentosim/pipeline build && pnpm --filter @dentosim/viewer-core build && pnpm --filter @dentosim/server build && pnpm --filter @dentosim/worker build && pnpm --filter @dentosim/web build",
+    "pretest": "pnpm --filter @dentosim/canonical build && pnpm --filter @dentosim/pipeline build && pnpm --filter @dentosim/viewer-core build && pnpm --filter @dentosim/server build",
+    "test": "pnpm --filter @dentosim/canonical test && pnpm --filter @dentosim/pipeline test && pnpm --filter @dentosim/viewer-core test && pnpm --filter @dentosim/server test",
     "fixtures": "pnpm --filter @dentosim/pipeline fixtures",
     "selfcheck": "pnpm --filter @dentosim/pipeline selfcheck",
     "cli": "pnpm --filter @dentosim/pipeline cli",
-    "bench": "pnpm --filter @dentosim/pipeline bench"
+    "bench": "pnpm --filter @dentosim/pipeline bench",
+    "db:migrate": "pnpm --filter @dentosim/server db:migrate",
+    "db:seed": "pnpm --filter @dentosim/server db:seed",
+    "dev:web": "pnpm --filter @dentosim/web dev",
+    "dev:worker": "pnpm --filter @dentosim/worker dev",
+    "e2e": "pnpm --filter @dentosim/web e2e",
+    "loadtest": "pnpm --filter @dentosim/web loadtest"
   }
 }

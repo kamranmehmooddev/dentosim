@@ -1,0 +1,42 @@
+# Local / single-server deployment. Production: managed Postgres + Redis and S3
+# (under BAA/DPA), several worker replicas, TLS at the load balancer.
+services:
+  postgres:
+    image: postgres:16
+    environment: { POSTGRES_PASSWORD: postgres }
+    volumes: [pgdata:/var/lib/postgresql/data, ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "postgres"], interval: 5s, retries: 20 }
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+  migrate:
+    build: .
+    command: migrate
+    env_file: .env
+    environment: &env
+      DATABASE_URL: postgres://dentosim:dentosim@postgres:5432/dentosim
+      REDIS_URL: redis://redis:6379
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /data/storage
+    depends_on: { postgres: { condition: service_healthy } }
+  web:
+    build: .
+    command: web
+    env_file: .env
+    environment: *env
+    ports: ["3000:3000"]
+    volumes: [storage:/data/storage]
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_started } }
+  worker:
+    build: .
+    command: worker
+    env_file: .env
+    environment:
+      <<: *env
+      WORKER_SELFCHECK: "1"
+      FIXTURES_DIR: /app/fixtures
+    volumes: [storage:/data/storage]
+    depends_on: { migrate: { condition: service_completed_successfully }, redis: { condition: service_started } }
+    deploy: { resources: { limits: { memory: 4g } } }
+volumes: { pgdata: {}, redisdata: {}, storage: {} }

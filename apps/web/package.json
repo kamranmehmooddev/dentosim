@@ -9,7 +9,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "echo 'web: covered by e2e (pnpm e2e)'",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "loadtest": "tsx scripts/loadtest.ts"
   },
   "dependencies": {
     "@dentosim/server": "workspace:*",
@@ -33,6 +34,7 @@
     "@types/react-dom": "^19.1.0",
     "@types/three": "^0.180.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "tsx": "^4.20.6"
   }
 }

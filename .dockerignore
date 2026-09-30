@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/.next
+**/e2e-results
+**/e2e-report
+.git
+.env
+fixtures/*/export
+fixtures/*/export.zip
+.selfcheck
+unity/**/Library

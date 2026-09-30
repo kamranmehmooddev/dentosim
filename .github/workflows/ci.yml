@@ -1,0 +1,79 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres }
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 20
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+    env:
+      DATABASE_URL: postgres://dentosim:dentosim@localhost:5432/dentosim
+      TEST_DATABASE_URL: postgres://dentosim:dentosim@localhost:5432/dentosim_test
+      STORAGE_LOCAL_DIR: /tmp/dentosim-storage
+      APP_SECRET: ci-secret-ci-secret-ci-secret-ci-secret-ci-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - name: Database roles (non-superuser app role for RLS)
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE ROLE dentosim LOGIN PASSWORD 'dentosim' NOSUPERUSER NOBYPASSRLS"
+          for db in dentosim dentosim_test; do
+            PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE $db OWNER dentosim"
+            PGPASSWORD=postgres psql -h localhost -U postgres -d $db -c "ALTER SCHEMA public OWNER TO dentosim"
+          done
+      - run: pnpm install --frozen-lockfile
+      - name: Build packages
+        run: |
+          pnpm --filter @dentosim/canonical build
+          pnpm --filter @dentosim/pipeline build
+          pnpm --filter @dentosim/viewer-core build
+          pnpm --filter @dentosim/server build
+          pnpm --filter @dentosim/worker build
+      - name: Unit + integration tests (pipeline self-check, tenancy, auth, billing, sharing, processing)
+        run: |
+          pnpm --filter @dentosim/canonical test
+          pnpm --filter @dentosim/pipeline test
+          pnpm --filter @dentosim/viewer-core test
+          pnpm --filter @dentosim/server test
+      - name: Build web
+        run: pnpm --filter @dentosim/web build
+      - name: End-to-end (Playwright, real stack)
+        run: |
+          pnpm --filter @dentosim/server db:migrate
+          pnpm --filter @dentosim/server db:seed
+          (cd apps/worker && node dist/index.js &)
+          (cd apps/web && DEV_VIEWER=1 npx next start -p 3000 &)
+          npx wait-on http://localhost:3000/api/health
+          cd apps/web && npx playwright install --with-deps chromium && npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: e2e-results, path: apps/web/e2e-results }
+
+  unity-webgl:
+    # Production viewer build — needs a Unity licence (secrets.UNITY_LICENSE / UNITY_EMAIL / UNITY_PASSWORD)
+    if: ${{ vars.BUILD_UNITY == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity/DentoSimViewer
+          targetPlatform: WebGL
+          buildMethod: DentoSim.EditorTools.BuildWebGL.Build
+      - uses: actions/upload-artifact@v4
+        with: { name: unity-webgl, path: build/WebGL }

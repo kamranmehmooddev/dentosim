@@ -99,25 +99,35 @@ test.describe("patient on a phone", () => {
   });
 });
 
-test("unknown export reaches the mapping screen and is processed after mapping", async ({ page }) => {
-  await login(page, "tech@demo.local");
-  await page.goto("/cases/new");
-  await page.getByLabel("Patient reference").fill(`MAP-${Date.now().toString(36)}`);
-  await page.getByRole("button", { name: "Create case" }).click();
-  const dir = join(FIXTURES, "unknown-needs-mapping/export");
-  const files = readdirSync(dir).filter((f) => statSync(join(dir, f)).isFile()).map((f) => join(dir, f));
-  await page.getByTestId("file-input").setInputFiles(files);
-  await page.getByTestId("start-upload").click();
-  await page.waitForURL(/\/cases\/[0-9a-f-]{36}$/);
+test("unknown export → mapping screen → saved template maps the next export automatically", async ({ page }) => {
+  // a fresh lab, so no template exists yet
+  const n = Date.now().toString(36);
+  await page.goto("/signup");
+  await page.getByLabel("Company / lab name").fill(`Mapping Lab ${n}`);
+  await page.getByLabel("Your name").fill("Morgan Mapper");
+  await page.getByLabel("Work email").fill(`mapper-${n}@example.com`);
+  await page.getByLabel("Password").fill("a strong password 1");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await page.waitForURL(/\/dashboard/);
+
+  const uploadDir = async (dir: string) => {
+    await page.goto("/cases/new");
+    await page.getByLabel("Patient reference").fill(`MAP-${Date.now().toString(36)}`);
+    await page.getByRole("button", { name: "Create case" }).click();
+    const files = readdirSync(dir).filter((f) => statSync(join(dir, f)).isFile()).map((f) => join(dir, f));
+    await page.getByTestId("file-input").setInputFiles(files);
+    await page.getByTestId("start-upload").click();
+    await page.waitForURL(/\/cases\/[0-9a-f-]{36}$/);
+  };
+
+  await uploadDir(join(FIXTURES, "unknown-needs-mapping/export"));
   await page.getByTestId("open-mapping").click({ timeout: 120_000 });
   await expect(page.getByTestId("mapping-rows").locator("li")).toHaveCount(6); // readme.txt is not a model and is not listed
-  // assign: kx7/qa2/zz9 = stages 0/1/2; -a upper, -b lower
-  const plan: Record<string, [string, string]> = { "kx7-a.stl": ["upper-stage", "0"], "qa2-a.stl": ["upper-stage", "1"], "zz9-a.stl": ["upper-stage", "2"], "kx7-b.stl": ["lower-stage", "0"], "qa2-b.stl": ["lower-stage", "1"], "zz9-b.stl": ["lower-stage", "2"], "readme.txt": ["ignore", ""] };
+  const plan: Record<string, [string, string]> = { "kx7-a.stl": ["upper-stage", "0"], "qa2-a.stl": ["upper-stage", "1"], "zz9-a.stl": ["upper-stage", "2"], "kx7-b.stl": ["lower-stage", "0"], "qa2-b.stl": ["lower-stage", "1"], "zz9-b.stl": ["lower-stage", "2"] };
   for (const [file, [role, stage]] of Object.entries(plan)) {
     const row = page.getByTestId("mapping-rows").locator("li", { hasText: file });
-    if ((await row.count()) === 0) continue;
     await row.getByTestId("mapping-role").selectOption(role);
-    if (stage) await row.getByTestId("mapping-stage").fill(stage);
+    await row.getByTestId("mapping-stage").fill(stage);
   }
   await page.getByPlaceholder("e.g. Archform").fill("Acme Planner");
   await page.getByTestId("confirm-mapping").click();
@@ -125,6 +135,11 @@ test("unknown export reaches the mapping screen and is processed after mapping",
   await expect(page.getByTestId("fit-stats")).toBeVisible({ timeout: 120_000 });
   await page.goto("/settings/templates");
   await expect(page.getByText("Acme Planner export")).toBeVisible();
+
+  // next export from the same software: no mapping screen
+  await uploadDir(join(FIXTURES, "unknown-needs-mapping-repeat/export"));
+  await expect(page.getByTestId("fit-stats")).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByText("Acme Planner").first()).toBeVisible();
 });
 
 test("share links: invalid tokens are rejected", async ({ page }) => {
