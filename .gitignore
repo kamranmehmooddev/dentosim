@@ -16,3 +16,4 @@ apps/web/e2e-results/
 apps/web/e2e-report/
 .data/
 .selfcheck-worker/
+dump.rdb
