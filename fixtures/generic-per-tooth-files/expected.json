@@ -1,0 +1,36 @@
+{
+  "synthetic": true,
+  "description": "Per-stage folders with one OBJ per tooth (FDI in the name) and a 3MF gingiva; upper arch only.",
+  "input": "export",
+  "runs": [
+    {
+      "name": "auto",
+      "expect": {
+        "status": "ready",
+        "adapter": "generic",
+        "arches": {
+          "upper": 4
+        },
+        "interArch": "single-arch",
+        "segmentation": {
+          "upper": {
+            "teeth": 14,
+            "proceduralGums": false
+          }
+        },
+        "fdiCount": {
+          "upper": 14
+        },
+        "noWarnings": [
+          "FDI_ESTIMATED",
+          "PROCEDURAL_GUMS"
+        ],
+        "anatomy": true,
+        "minMovements": 42,
+        "compression": {
+          "maxErrorTrimmedMeanMm": 0.15
+        }
+      }
+    }
+  ]
+}

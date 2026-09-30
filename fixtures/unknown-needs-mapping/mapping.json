@@ -1,0 +1,44 @@
+{
+  "entries": [
+    {
+      "path": "kx7-a.stl",
+      "role": "stage",
+      "jaw": "upper",
+      "stageLabel": "0"
+    },
+    {
+      "path": "kx7-b.stl",
+      "role": "stage",
+      "jaw": "lower",
+      "stageLabel": "0"
+    },
+    {
+      "path": "qa2-a.stl",
+      "role": "stage",
+      "jaw": "upper",
+      "stageLabel": "1"
+    },
+    {
+      "path": "qa2-b.stl",
+      "role": "stage",
+      "jaw": "lower",
+      "stageLabel": "1"
+    },
+    {
+      "path": "zz9-a.stl",
+      "role": "stage",
+      "jaw": "upper",
+      "stageLabel": "2"
+    },
+    {
+      "path": "zz9-b.stl",
+      "role": "stage",
+      "jaw": "lower",
+      "stageLabel": "2"
+    },
+    {
+      "path": "readme.txt",
+      "role": "ignore"
+    }
+  ]
+}

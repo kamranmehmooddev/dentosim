@@ -1,0 +1,40 @@
+{
+  "synthetic": true,
+  "description": "Meaningless file names: must reach the mapping screen; the confirmed mapping (mapping.json) imports it and becomes a template.",
+  "input": "export",
+  "runs": [
+    {
+      "name": "auto",
+      "expect": {
+        "status": "needs-mapping",
+        "minReasons": 1
+      }
+    },
+    {
+      "name": "manual",
+      "mapping": "mapping.json",
+      "expect": {
+        "status": "ready",
+        "adapter": "manual-mapping",
+        "arches": {
+          "upper": 3,
+          "lower": 3
+        },
+        "anatomy": true
+      }
+    },
+    {
+      "name": "template",
+      "templateFromMapping": "mapping.json",
+      "expect": {
+        "status": "ready",
+        "adapterPrefix": "template:",
+        "arches": {
+          "upper": 3,
+          "lower": 3
+        },
+        "anatomy": true
+      }
+    }
+  ]
+}

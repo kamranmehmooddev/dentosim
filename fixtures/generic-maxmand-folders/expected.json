@@ -1,0 +1,61 @@
+{
+  "synthetic": true,
+  "description": "Numbered binary STL per stage in Maxillary/ and Mandibular/ folders, zipped; attachments, embossed text, lower arch finishes early.",
+  "input": "export.zip",
+  "runs": [
+    {
+      "name": "auto",
+      "expect": {
+        "status": "ready",
+        "adapter": "generic",
+        "arches": {
+          "upper": 9,
+          "lower": 7
+        },
+        "sourceUnits": "mm",
+        "interArch": "export",
+        "segmentation": {
+          "upper": {
+            "teeth": 14,
+            "attachments": 6,
+            "unsegmented": false,
+            "minDroppedFragments": 5
+          },
+          "lower": {
+            "teeth": 14,
+            "attachments": 6,
+            "unsegmented": false,
+            "minDroppedFragments": 5
+          }
+        },
+        "registration": {
+          "performed": false
+        },
+        "compression": {
+          "minRatio": 5,
+          "maxErrorTrimmedMeanMm": 0.15
+        },
+        "warnings": [
+          "ARCH_FINISHES_EARLY",
+          "FRAGMENTS_DROPPED"
+        ],
+        "noWarnings": [
+          "NO_INITIAL_STAGE",
+          "STAGE_GAP"
+        ],
+        "anatomy": true,
+        "bite": {
+          "upperFdi": 11,
+          "lowerFdi": 41,
+          "distanceMm": 9.827,
+          "toleranceMm": 0.05
+        },
+        "fdiCount": {
+          "upper": 14,
+          "lower": 14
+        },
+        "minMovements": 100
+      }
+    }
+  ]
+}

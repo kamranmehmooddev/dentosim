@@ -1,0 +1,21 @@
+{
+  "name": "dentosim",
+  "private": true,
+  "version": "0.1.0",
+  "description": "DentoSim \u2014 multi-tenant white-label SaaS for clear-aligner treatment simulations",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm --filter @dentosim/canonical build && pnpm -r typecheck",
+    "pretest": "pnpm --filter @dentosim/canonical build",
+    "test": "pnpm -r test",
+    "fixtures": "pnpm --filter @dentosim/pipeline fixtures",
+    "selfcheck": "pnpm --filter @dentosim/pipeline selfcheck",
+    "cli": "pnpm --filter @dentosim/pipeline cli",
+    "bench": "pnpm --filter @dentosim/pipeline bench"
+  }
+}

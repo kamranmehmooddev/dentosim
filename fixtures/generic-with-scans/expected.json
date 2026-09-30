@@ -1,0 +1,39 @@
+{
+  "synthetic": true,
+  "description": "Export with a wrong bite + upper/lower PLY scans in a scanner frame; registration must restore the true bite.",
+  "input": "export",
+  "runs": [
+    {
+      "name": "auto",
+      "expect": {
+        "status": "ready",
+        "adapter": "generic",
+        "arches": {
+          "upper": 7,
+          "lower": 7
+        },
+        "interArch": "registered",
+        "registration": {
+          "performed": true,
+          "maxTrimmedMeanMm": 0.1
+        },
+        "compression": {
+          "minRatio": 5,
+          "maxErrorTrimmedMeanMm": 0.15
+        },
+        "noWarnings": [
+          "REGISTRATION_POOR_FIT",
+          "ORIENTATION_CHECK",
+          "BITE_SCAN_INCONSISTENT"
+        ],
+        "anatomy": true,
+        "bite": {
+          "upperFdi": 11,
+          "lowerFdi": 41,
+          "distanceMm": 9.827,
+          "toleranceMm": 0.1
+        }
+      }
+    }
+  ]
+}

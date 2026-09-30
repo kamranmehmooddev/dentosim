@@ -1,0 +1,27 @@
+{
+  "synthetic": true,
+  "description": "Folders A/ and B/ of numbered models without jaw words (palate decides) + a duplicate copy.",
+  "input": "export",
+  "runs": [
+    {
+      "name": "auto",
+      "expect": {
+        "status": "ready",
+        "adapter": "generic",
+        "arches": {
+          "upper": 6,
+          "lower": 6
+        },
+        "warnings": [
+          "JAW_FROM_GEOMETRY",
+          "DUPLICATE_FILE"
+        ],
+        "anatomy": true,
+        "compression": {
+          "minRatio": 5,
+          "maxErrorTrimmedMeanMm": 0.15
+        }
+      }
+    }
+  ]
+}

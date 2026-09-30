@@ -1,0 +1,39 @@
+{
+  "synthetic": true,
+  "description": "One GLB scene, a node per arch per stage, y-down frame.",
+  "input": "export",
+  "runs": [
+    {
+      "name": "auto",
+      "expect": {
+        "status": "ready",
+        "adapter": "generic",
+        "arches": {
+          "upper": 5,
+          "lower": 5
+        },
+        "interArch": "export",
+        "segmentation": {
+          "upper": {
+            "teeth": 14,
+            "attachments": 6
+          },
+          "lower": {
+            "teeth": 14,
+            "attachments": 6
+          }
+        },
+        "compression": {
+          "maxErrorTrimmedMeanMm": 0.15
+        },
+        "anatomy": true,
+        "bite": {
+          "upperFdi": 11,
+          "lowerFdi": 41,
+          "distanceMm": 9.827,
+          "toleranceMm": 0.05
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "synthetic": true,
+  "description": "Arches laid out base-down side by side for printing (no bite) with fused last molars.",
+  "input": "export",
+  "runs": [
+    {
+      "name": "auto",
+      "expect": {
+        "status": "ready",
+        "adapter": "generic",
+        "arches": {
+          "upper": 4,
+          "lower": 4
+        },
+        "interArch": "reconstructed",
+        "segmentation": {
+          "upper": {
+            "teeth": 14,
+            "fusedSplit": 1
+          },
+          "lower": {
+            "teeth": 14,
+            "fusedSplit": 1
+          }
+        },
+        "warnings": [
+          "INTER_ARCH_RECONSTRUCTED",
+          "FUSED_TEETH_SPLIT"
+        ],
+        "anatomy": true,
+        "compression": {
+          "minRatio": 5,
+          "maxErrorTrimmedMeanMm": 0.15
+        }
+      }
+    }
+  ]
+}

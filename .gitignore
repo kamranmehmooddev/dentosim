@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+# generated synthetic fixtures (regenerate with `pnpm fixtures`)
+fixtures/*/export/
+fixtures/*/out/
+fixtures/generic-maxmand-folders/export.zip
+.selfcheck/

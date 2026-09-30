@@ -1,0 +1,32 @@
+{
+  "synthetic": true,
+  "description": "Lower arch only, teeth fused with gums in one surface, 'Step N' numbering from 1.",
+  "input": "export",
+  "runs": [
+    {
+      "name": "auto",
+      "expect": {
+        "status": "ready",
+        "adapter": "generic",
+        "arches": {
+          "lower": 5
+        },
+        "interArch": "single-arch",
+        "segmentation": {
+          "lower": {
+            "teeth": 0,
+            "unsegmented": true
+          }
+        },
+        "warnings": [
+          "UNSEGMENTED",
+          "NO_INITIAL_STAGE"
+        ],
+        "compression": {
+          "minRatio": 5,
+          "maxErrorTrimmedMeanMm": 0.15
+        }
+      }
+    }
+  ]
+}

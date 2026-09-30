@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dentosim.cloud/schema/canonical-case/1.0.json",
+  "title": "DentoSim Canonical Case (serialised manifest)",
+  "description": "Single internal representation of a clear-aligner treatment plan. Units: mm. Frame: dentosim-v1 (+X patient left, +Y superior, +Z anterior, right-handed). Mesh data is referenced by URI (e.g. 'upper/stage-03.tsm2#tooth-11').",
+  "type": "object",
+  "required": ["schemaVersion", "units", "coordinateSystem", "arches", "source", "warnings"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "units": { "const": "mm" },
+    "coordinateSystem": { "const": "dentosim-v1" },
+    "arches": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "upper": { "$ref": "#/$defs/arch" },
+        "lower": { "$ref": "#/$defs/arch" }
+      }
+    },
+    "scans": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "upper": { "$ref": "#/$defs/meshRef" },
+        "lower": { "$ref": "#/$defs/meshRef" },
+        "bite": { "$ref": "#/$defs/meshRef" }
+      }
+    },
+    "toothMovements": { "type": "array", "items": { "$ref": "#/$defs/toothMovement" } },
+    "source": { "$ref": "#/$defs/source" },
+    "normalization": { "$ref": "#/$defs/normalization" },
+    "segmentation": { "$ref": "#/$defs/segmentation" },
+    "registration": { "$ref": "#/$defs/registration" },
+    "warnings": { "type": "array", "items": { "$ref": "#/$defs/warning" } }
+  },
+  "$defs": {
+    "jaw": { "enum": ["upper", "lower"] },
+    "fdi": { "type": "integer", "minimum": 11, "maximum": 88 },
+    "matrix4": { "type": "array", "items": { "type": "number" }, "minItems": 16, "maxItems": 16 },
+    "vec3": { "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3 },
+    "meshRef": {
+      "type": "object",
+      "required": ["uri", "vertexCount", "triangleCount"],
+      "additionalProperties": false,
+      "properties": {
+        "uri": { "type": "string", "minLength": 1 },
+        "vertexCount": { "type": "integer", "minimum": 0 },
+        "triangleCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "part": {
+      "type": "object",
+      "required": ["id", "kind", "mesh"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["tooth", "gums", "attachment", "base", "arch"] },
+        "fdi": { "$ref": "#/$defs/fdi" },
+        "fdiEstimated": { "type": "boolean" },
+        "procedural": { "type": "boolean" },
+        "mesh": { "$ref": "#/$defs/meshRef" }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "required": ["index", "sourceFiles", "segmented", "parts"],
+      "additionalProperties": false,
+      "properties": {
+        "index": { "type": "integer", "minimum": 0 },
+        "sourceLabel": { "type": "string" },
+        "sourceFiles": { "type": "array", "items": { "type": "string" } },
+        "segmented": { "type": "boolean" },
+        "parts": { "type": "array", "items": { "$ref": "#/$defs/part" }, "minItems": 1 }
+      }
+    },
+    "arch": {
+      "type": "object",
+      "required": ["jaw", "stages"],
+      "additionalProperties": false,
+      "properties": {
+        "jaw": { "$ref": "#/$defs/jaw" },
+        "stages": { "type": "array", "items": { "$ref": "#/$defs/stage" }, "minItems": 1 }
+      }
+    },
+    "toothMovement": {
+      "type": "object",
+      "required": [
+        "jaw", "toothId", "stage", "translationMm", "translationMagnitudeMm", "mesialDistalMm",
+        "buccalLingualMm", "extrusionIntrusionMm", "rotationDeg", "tipDeg", "torqueDeg", "rotationAboutLongAxisDeg"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "jaw": { "$ref": "#/$defs/jaw" },
+        "toothId": { "type": "string" },
+        "fdi": { "$ref": "#/$defs/fdi" },
+        "stage": { "type": "integer", "minimum": 0 },
+        "translationMm": { "$ref": "#/$defs/vec3" },
+        "translationMagnitudeMm": { "type": "number", "minimum": 0 },
+        "mesialDistalMm": { "type": "number" },
+        "buccalLingualMm": { "type": "number" },
+        "extrusionIntrusionMm": { "type": "number" },
+        "rotationDeg": { "type": "number", "minimum": 0 },
+        "tipDeg": { "type": "number" },
+        "torqueDeg": { "type": "number" },
+        "rotationAboutLongAxisDeg": { "type": "number" }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "required": ["code", "severity", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z0-9_]+$" },
+        "severity": { "enum": ["info", "warning", "error"] },
+        "message": { "type": "string" },
+        "file": { "type": "string" },
+        "jaw": { "$ref": "#/$defs/jaw" },
+        "stage": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "detectionScore": {
+      "type": "object",
+      "required": ["adapter", "version", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "adapter": { "type": "string" },
+        "version": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "reason": { "type": "string" }
+      }
+    },
+    "fileMapEntry": {
+      "type": "object",
+      "required": ["path", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string" },
+        "node": { "type": "string" },
+        "partKind": { "enum": ["tooth", "gums", "attachment", "base", "arch"] },
+        "role": {
+          "enum": ["stage", "scan-upper", "scan-lower", "scan-bite", "attachment-template", "retainer", "base", "tooth", "transforms", "ignore"]
+        },
+        "jaw": { "$ref": "#/$defs/jaw" },
+        "stageLabel": { "type": "string" },
+        "stage": { "type": "integer", "minimum": 0 },
+        "fdi": { "$ref": "#/$defs/fdi" },
+        "sizeBytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "reason": { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["vendor", "adapter", "detection", "fileMap"],
+      "additionalProperties": false,
+      "properties": {
+        "vendor": { "type": "string" },
+        "adapter": {
+          "type": "object",
+          "required": ["name", "version"],
+          "additionalProperties": false,
+          "properties": { "name": { "type": "string" }, "version": { "type": "string" } }
+        },
+        "detection": { "type": "array", "items": { "$ref": "#/$defs/detectionScore" } },
+        "mappingApplied": {
+          "type": "object",
+          "required": ["manual"],
+          "additionalProperties": false,
+          "properties": { "templateId": { "type": "string" }, "manual": { "type": "boolean" } }
+        },
+        "fileMap": { "type": "array", "items": { "$ref": "#/$defs/fileMapEntry" } }
+      }
+    },
+    "normalization": {
+      "type": "object",
+      "required": ["sourceUnits", "scaleApplied", "transforms", "interArch", "tiltCorrectedDeg"],
+      "additionalProperties": false,
+      "properties": {
+        "sourceUnits": { "enum": ["mm", "inch", "cm", "m"] },
+        "scaleApplied": { "type": "number", "exclusiveMinimum": 0 },
+        "transforms": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "upper": { "$ref": "#/$defs/matrix4" }, "lower": { "$ref": "#/$defs/matrix4" } }
+        },
+        "interArch": { "enum": ["export", "registered", "reconstructed", "single-arch"] },
+        "tiltCorrectedDeg": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "upper": { "type": "number" }, "lower": { "type": "number" } }
+        }
+      }
+    },
+    "segmentation": {
+      "type": "object",
+      "required": ["performed", "jaws"],
+      "additionalProperties": false,
+      "properties": {
+        "performed": { "type": "boolean" },
+        "jaws": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "upper": { "$ref": "#/$defs/segmentationJaw" },
+            "lower": { "$ref": "#/$defs/segmentationJaw" }
+          }
+        }
+      }
+    },
+    "segmentationJaw": {
+      "type": "object",
+      "required": ["teeth", "attachments", "droppedFragments", "fusedSplit", "unsegmented", "proceduralGums"],
+      "additionalProperties": false,
+      "properties": {
+        "teeth": { "type": "integer", "minimum": 0 },
+        "attachments": { "type": "integer", "minimum": 0 },
+        "droppedFragments": { "type": "integer", "minimum": 0 },
+        "fusedSplit": { "type": "integer", "minimum": 0 },
+        "unsegmented": { "type": "boolean" },
+        "proceduralGums": { "type": "boolean" }
+      }
+    },
+    "registrationFit": {
+      "type": "object",
+      "required": ["matrix", "trimmedMeanMm", "medianMm", "rmsMm", "inlierFraction", "iterations", "starts"],
+      "additionalProperties": false,
+      "properties": {
+        "matrix": { "$ref": "#/$defs/matrix4" },
+        "trimmedMeanMm": { "type": "number", "minimum": 0 },
+        "medianMm": { "type": "number", "minimum": 0 },
+        "rmsMm": { "type": "number", "minimum": 0 },
+        "inlierFraction": { "type": "number", "minimum": 0, "maximum": 1 },
+        "iterations": { "type": "integer", "minimum": 0 },
+        "starts": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "registration": {
+      "type": "object",
+      "required": ["performed", "method", "scansPresent", "note"],
+      "additionalProperties": false,
+      "properties": {
+        "performed": { "type": "boolean" },
+        "method": { "enum": ["pca-multistart-trimmed-icp", "none"] },
+        "scansPresent": { "type": "boolean" },
+        "upper": { "$ref": "#/$defs/registrationFit" },
+        "lower": { "$ref": "#/$defs/registrationFit" },
+        "biteConsistencyMedianMm": { "type": "number", "minimum": 0 },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}

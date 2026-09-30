@@ -1,0 +1,48 @@
+{
+  "synthetic": true,
+  "description": "ASCII STL in inches, 'NN_of_10' numbering + 'initial' model, both arches tilted for printing.",
+  "input": "export",
+  "runs": [
+    {
+      "name": "auto",
+      "expect": {
+        "status": "ready",
+        "adapter": "generic",
+        "arches": {
+          "upper": 11,
+          "lower": 11
+        },
+        "sourceUnits": "inch",
+        "interArch": "export",
+        "segmentation": {
+          "upper": {
+            "teeth": 14,
+            "attachments": 6
+          },
+          "lower": {
+            "teeth": 14,
+            "attachments": 6
+          }
+        },
+        "compression": {
+          "minRatio": 5,
+          "maxErrorTrimmedMeanMm": 0.15
+        },
+        "warnings": [
+          "UNITS_CONVERTED_INCH"
+        ],
+        "noWarnings": [
+          "NO_INITIAL_STAGE",
+          "UNITS_UNCERTAIN"
+        ],
+        "anatomy": true,
+        "bite": {
+          "upperFdi": 11,
+          "lowerFdi": 41,
+          "distanceMm": 9.827,
+          "toleranceMm": 0.05
+        }
+      }
+    }
+  ]
+}
